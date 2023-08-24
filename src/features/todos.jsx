@@ -1,4 +1,5 @@
 import { combineReducers } from "redux";
+import { makeFetchingReducer, makeSetReducer } from "./utils";
 
 // ACTION CREATORS
 export const setPending = () => ({ type: "todos/pending" });
@@ -21,14 +22,8 @@ export const fetchThunk = () => async (dispatch) => {
   }
 };
 
-export const filterReducer = (state = "all", action) => {
-  switch (action.type) {
-    case "filter/set":
-      return (state = action.payload);
-    default:
-      return state;
-  }
-};
+export const filterReducer = makeSetReducer(['filter/set']);
+
 
 export const todoReducer = (state = [], action) => {
   switch (action.type) {
@@ -52,27 +47,12 @@ export const todoReducer = (state = [], action) => {
   }
 };
 
-// este es un reducer que se encarga de ver las acciones relacionadas al fetch de la API
-const initialFetching = {
-  loading: "idle", // pending - succeded - rejected  (se recomienda manejar mas de un estado en lugar de true - false , asi se puede hacer mejor control y debugeo de como se esta comportando alguna accion)
-  error: null,
-};
-export const fetchingReducer = (state = initialFetching, action) => {
-  switch (action.type) {
-    case "todos/pending": {
-      return { ...state, loading: "pending" };
-    }
-    case "todos/fulfilled": {
-      return { ...state, loading: "succeded" };
-    }
-    case "todos/rejected": {
-      return { loading: "rejected", error: action.error };
-    }
-    default: {
-      return state;
-    }
-  }
-};
+export const fetchingReducer = makeFetchingReducer([
+    'todos/pending',
+    'todos/fulfilled',
+    'todos/error'
+])
+
 
 // esta es una version mucho mas simplificada para usar los reducers separados
 // aqui podemos hacer composicion de reducers
