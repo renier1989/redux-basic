@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 const initialState = {
   entities: [],
+  filter: 'all' , // complete || incomplete   ( estos seran los estados del filtor para mostrar los todos)
 };
 export const reducer = (state = initialState, action) => {
   switch (action.type) {
@@ -27,6 +28,13 @@ export const reducer = (state = initialState, action) => {
         entities : newTodo
       }
     }
+    // aqui creao un action para setear el estado del filtro y saber que todos mostrar. 
+    case "filter/set": {
+      return {
+        ...state,
+        filter : action.payload
+      }
+    }
   }
   return state;
 };
@@ -42,9 +50,28 @@ const TodoItem = ({todo}) => {
   )
 }
 
+// esta funcion lo que evalua es los estados del filter para filtrar los todo y retornarlos con el estado completed filtrado
+const selectedTodos = state => {
+  const {entities , filter} = state;
+
+  if(filter === 'complete'){
+    return entities.filter(todo => todo.completed);
+  }
+  if(filter === 'incomplete'){
+    return entities.filter(todo => !todo.completed);
+  }
+  return entities
+  
+}
+
 function App() {
   const input = useRef();
-  const state = useSelector((x) => x);
+  // const state = useSelector((x) => x); // aqui simplemente estaba retornado los valores completos de state. 
+  
+  // aqui le puedo pasar una funcion que me va retornar los todos dependiendo de los filtros
+  // aqui cambio el nombre que la constante que traera los todos de "state" a "todos" para no generar confilcto con el state del reducer
+  const todos = useSelector(selectedTodos); 
+  
   const dispatch = useDispatch();
   const [value, setValue] = useState("");
   // console.log(state, 'Rendering');
@@ -73,11 +100,11 @@ function App() {
       <form onSubmit={submit}>
         <input ref={input} value={value} onChange={(e) => handleChange(e)} />
       </form>
-      <button>Mostrar All</button>
-      <button>Completados</button>
-      <button>Incompletos</button>
+      <button onClick={()=>dispatch({type:'filter/set', payload:'all'})}>Mostrar All</button>
+      <button onClick={()=>dispatch({type:'filter/set', payload:'complete'})}>Completados</button>
+      <button onClick={()=>dispatch({type:'filter/set', payload:'incomplete'})}>Incompletos</button>
       <ul>
-        {state.entities.map(todo => <TodoItem key={todo.id} todo={todo} />)}
+        {todos.map(todo => <TodoItem key={todo.id} todo={todo} />)}
       </ul>
     </div>
   );
