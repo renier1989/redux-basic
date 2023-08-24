@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,8 +14,17 @@ export const asyncMiddleware = (store) => (next) => (action) => {
 }
 
 // creo esta funcion con el dispatch inyectado , para ejecutarla y verificar que este sea capturado por el asyncMiddleware
-export const fetchThunk = () => (dispatch) => {
-  console.log('se ejecutar una funcion');
+export const fetchThunk = () => async (dispatch) => {
+  dispatch({type: 'todos/pending'});
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/todos'); // consulto a al API
+    const data = await response.json(); // convierto el resultado en formato JSON 
+    const todos = data.slice(0,10);  // la API me retorna 200 registros, aqui los limito a solo 10
+    dispatch({type:'todos/fullfiled', payload:todos});
+    console.log("🚀 ~ file: App.jsx:23 ~ fetchThunk ~ todos:", todos)
+  } catch (e) {
+    dispatch({type:'todos/error', error: e.message}); // hago un dicpatch para capturar un mensaje de error
+  }
 }
 
 // // si se usa combineReducers, ya no hace falta usar el initialState
@@ -34,6 +44,9 @@ export const filterReducer = (state = "all", action) => {
 
 export const todoReducer = (state = [], action) => {
   switch (action.type) {
+    case "todos/fullfiled":{
+      return state = action.payload;
+    }
     case "todo/add": {
       return state.concat({ ...action.payload });
     }
