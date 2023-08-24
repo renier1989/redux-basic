@@ -1,4 +1,5 @@
-import { useState } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 const initialState = {
@@ -14,22 +15,43 @@ export const reducer = (state = initialState, action) => {
         entities: state.entities.concat({ ...action.payload }),
       }; // esto es para poder obtener y actualizar la lista de los TODOS con el formato correcto , xe: si tiene un id, un estado, contenido en forma de JSON por eso se usa en concat para concatenar con lo que ya estaba en el state de entities
     }
+    case "todo/complete": {
+      const newTodo = state.entities.map(todo => {
+        if(todo.id === action.payload.id){
+          return {...todo, completed: !todo.completed}
+        } 
+        return todo
+      })
+      return {
+        ...state,
+        entities : newTodo
+      }
+    }
   }
   return state;
 };
 
 
 const TodoItem = ({todo}) => {
+  const dispatch = useDispatch();
   return(
-    <li>{todo.title}</li>
+    <li 
+    style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}
+    onClick={()=>dispatch({type:'todo/complete', payload:todo})}
+    >{todo.title}</li>
   )
 }
 
 function App() {
+  const input = useRef();
   const state = useSelector((x) => x);
   const dispatch = useDispatch();
   const [value, setValue] = useState("");
   // console.log(state, 'Rendering');
+
+  useEffect(()=>{
+    input.current.focus();
+  },[])
 
   const submit = (e) => {
     e.preventDefault();
@@ -45,11 +67,11 @@ function App() {
     setValue(target.value);
   };
 
-  console.log(state);
+  // console.log(state);
   return (
     <div>
       <form onSubmit={submit}>
-        <input value={value} onChange={(e) => handleChange(e)} />
+        <input ref={input} value={value} onChange={(e) => handleChange(e)} />
       </form>
       <button>Mostrar All</button>
       <button>Completados</button>
