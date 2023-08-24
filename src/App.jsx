@@ -3,10 +3,25 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { combineReducers } from "redux";
 
-const initialState = {
-  entities: [],
-  filter: "all", // complete || incomplete   ( estos seran los estados del filtor para mostrar los todos)
-};
+// los middlewares reciben estos de funciones que ejecutan otras funciones , // el store - el next - el 
+export const asyncMiddleware = (store) => (next) => (action) => {
+  // aqui estoy comprobando si la action que se esta ejecutando es una funcion
+  if(typeof action === 'function'){
+    return action(store.dispatch, store.getState)
+  }
+  return next(action);
+}
+
+// creo esta funcion con el dispatch inyectado , para ejecutarla y verificar que este sea capturado por el asyncMiddleware
+export const fetchThunk = () => (dispatch) => {
+  console.log('se ejecutar una funcion');
+}
+
+// // si se usa combineReducers, ya no hace falta usar el initialState
+// const initialState = {
+//   entities: [],
+//   filter: "all", // complete || incomplete   ( estos seran los estados del filtor para mostrar los todos)
+// };
 
 export const filterReducer = (state = "all", action) => {
   switch (action.type) {
@@ -124,6 +139,7 @@ function App() {
       >
         Incompletos
       </button>
+      <button onClick={()=>dispatch(fetchThunk())}>Fetch</button>
       <ul>
         {todos.map((todo) => (
           <TodoItem key={todo.id} todo={todo} />
