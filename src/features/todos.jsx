@@ -1,5 +1,5 @@
 import { combineReducers } from "redux";
-import { makeFetchingReducer, makeSetReducer } from "./utils";
+import { makeCrudReducer, makeFetchingReducer, makeSetReducer, reduceReducers } from "./utils";
 
 // ACTION CREATORS
 export const setPending = () => ({ type: "todos/pending" });
@@ -22,56 +22,44 @@ export const fetchThunk = () => async (dispatch) => {
   }
 };
 
-export const filterReducer = makeSetReducer(['filter/set']);
+export const filterReducer = makeSetReducer(["filter/set"]);
 
+// se separo la logica del reducer para crear y modificar los todos
+const crudReducer = makeCrudReducer([
+    'todo/add',
+    'todo/complete'
+]) 
 
-export const todoReducer = (state = [], action) => {
-  switch (action.type) {
-    case "todos/fulfilled": {
-      return (state = action.payload);
-    }
-    case "todo/add": {
-      return state.concat({ ...action.payload });
-    }
-    case "todo/complete": {
-      const newTodo = state.map((todo) => {
-        if (todo.id === action.payload.id) {
-          return { ...todo, completed: !todo.completed };
-        }
-        return todo;
-      });
-      return newTodo;
-    }
-    default:
-      return state;
-  }
-};
+// este fullfilledReducer tomara como base una logica del makeSetReducer , la cual lo unico que hace es asignar el valor que recibe del payload a su state
+const fulfilledReducer = makeSetReducer(["todos/fulfilled"]); 
+
+// ahora tenermos que componer la ejecucion de los reducer con la funcion de reduceReducers y pasarle los reducer segund el orden de ejecucion que queremos
+const todoReducer = reduceReducers(crudReducer, fulfilledReducer);
 
 export const fetchingReducer = makeFetchingReducer([
-    'todos/pending',
-    'todos/fulfilled',
-    'todos/error'
-])
-
+  "todos/pending",
+  "todos/fulfilled",
+  "todos/error",
+]);
 
 // esta es una version mucho mas simplificada para usar los reducers separados
 // aqui podemos hacer composicion de reducers
 export const reducer = combineReducers({
-    // este se encarga de todo lo relacionado con los todos y se hace una composicion entre el todoReducer y el fetchingReducer
-    todos: combineReducers({
-      entities: todoReducer,
-      status: fetchingReducer,
-    }),
-    filter: filterReducer,
-  });
-  
-  // // aqui hago la separacion en reducers mas pequeños para poder separa complejidad
-  // export const reducer = (state = initialState, action) => {
-  //   return {
-  //     entities: todoReducer(state.entities, action),
-  //     filter: filterReducer(state.filter, action),
-  //   };
-  // };
+  // este se encarga de todo lo relacionado con los todos y se hace una composicion entre el todoReducer y el fetchingReducer
+  todos: combineReducers({
+    entities: todoReducer,
+    status: fetchingReducer,
+  }),
+  filter: filterReducer,
+});
+
+// // aqui hago la separacion en reducers mas pequeños para poder separa complejidad
+// export const reducer = (state = initialState, action) => {
+//   return {
+//     entities: todoReducer(state.entities, action),
+//     filter: filterReducer(state.filter, action),
+//   };
+// };
 
 // esta funcion lo que evalua es los estados del filter para filtrar los todo y retornarlos con el estado completed filtrado
 // aqui se hace una refactorizacion de los todos , porque en el combineReducers se cambio el nombre de la propiedad
