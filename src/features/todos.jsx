@@ -1,13 +1,33 @@
 import { combineReducers } from "redux";
 import { makeCrudReducer, makeFetchingReducer, makeSetReducer, reduceReducers } from "./utils";
 
+// Make action creator = mac
+export const mac = (type , ...argNames) => (...args) => {
+    // console.log(type, argNames);
+    const action = {type};
+    // console.log(action);
+    argNames.forEach((arg, index)=>{
+        // console.log(arg, index);
+        // console.log(action[argNames[index]], args[index]);
+        action[argNames[index]] = args[index]
+    })
+    return action;
+}
+
 // ACTION CREATORS
-export const setPending = () => ({ type: "todos/pending" });
-export const setFulfilled = (payload) => ({ type: "todos/fulfilled", payload });
-export const setError = (e) => ({ type: "todos/error", payload: e.message });
-export const setComplete = (payload) => ({ type: "todo/complete", payload });
-export const setTodoAdd = (payload) => ({ type: "todo/add", payload });
-export const setFilter = (payload) => ({ type: "filter/set", payload });
+export const setPending = mac('todos/pending');
+export const setFulfilled = mac('todos/fulfilled', 'payload');
+export const setError = mac('todos/error', 'error');
+export const  setComplete = mac('todo/complete', 'payload');
+export const setTodoAdd = mac('todo/add', 'payload');
+export const setFilter = mac('filter/set', 'payload');
+
+// export const setPending = () => ({ type: "todos/pending" });
+// export const setFulfilled = (payload) => ({ type: "todos/fulfilled", payload });
+// export const setError = (e) => ({ type: "todos/error", payload: e.message });
+// export const setComplete = (payload) => ({ type: "todo/complete", payload });
+// export const setTodoAdd = (payload) => ({ type: "todo/add", payload });
+// export const setFilter = (payload) => ({ type: "filter/set", payload });
 
 // creo esta funcion con el dispatch inyectado , para ejecutarla y verificar que este sea capturado por el asyncMiddleware
 export const fetchThunk = () => async (dispatch) => {
@@ -18,7 +38,7 @@ export const fetchThunk = () => async (dispatch) => {
     const todos = data.slice(0, 10); // la API me retorna 200 registros, aqui los limito a solo 10
     dispatch(setFulfilled(todos));
   } catch (e) {
-    dispatch(setError(e)); // hago un dicpatch para capturar un mensaje de error
+    dispatch(setError(e.message)); // hago un dicpatch para capturar un mensaje de error
   }
 };
 
