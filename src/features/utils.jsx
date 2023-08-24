@@ -1,3 +1,24 @@
+export const mat = entity => ([`${entity}/pending`, `${entity}/fulfilled`, `${entity}/rejected`]);
+
+// Make action creator = mac
+export const mac = (type , ...argNames) => (...args) => {
+    // console.log(type, argNames);
+    const action = {type};
+    // console.log(action);
+    argNames.forEach((arg, index)=>{
+        // console.log(arg, index);
+        // console.log(action[argNames[index]], args[index]);
+        action[argNames[index]] = args[index]
+    })
+    return action;
+}
+
+export const asyncMac = asyncTypes => ([
+    mac(asyncTypes[0]),
+    mac(asyncTypes[1], 'payload'),
+    mac(asyncTypes[2], 'error'), 
+])
+
 // esta es una funcion que consume reducers
 // los arguemntos que recibe son los reducers y estos se ejecutan sengun el order como se le vayan asignando a la funcion de reduceReducers
 // estos a su vez tambien recibiran el state y el action

@@ -1,33 +1,16 @@
 import { combineReducers } from "redux";
-import { makeCrudReducer, makeFetchingReducer, makeSetReducer, reduceReducers } from "./utils";
+import { mac,mat, makeCrudReducer, makeFetchingReducer, makeSetReducer, reduceReducers, asyncMac } from "./utils";
 
-// Make action creator = mac
-export const mac = (type , ...argNames) => (...args) => {
-    // console.log(type, argNames);
-    const action = {type};
-    // console.log(action);
-    argNames.forEach((arg, index)=>{
-        // console.log(arg, index);
-        // console.log(action[argNames[index]], args[index]);
-        action[argNames[index]] = args[index]
-    })
-    return action;
-}
+const asyncTodos = mat('todos');
 
+const [setPending, setFulfilled, setError] = asyncMac(asyncTodos);
 // ACTION CREATORS
-export const setPending = mac('todos/pending');
-export const setFulfilled = mac('todos/fulfilled', 'payload');
-export const setError = mac('todos/error', 'error');
+// export const setPending = mac('todos/pending');
+// export const setFulfilled = mac('todos/fulfilled', 'payload');
+// export const setError = mac('todos/error', 'error');
 export const  setComplete = mac('todo/complete', 'payload');
 export const setTodoAdd = mac('todo/add', 'payload');
 export const setFilter = mac('filter/set', 'payload');
-
-// export const setPending = () => ({ type: "todos/pending" });
-// export const setFulfilled = (payload) => ({ type: "todos/fulfilled", payload });
-// export const setError = (e) => ({ type: "todos/error", payload: e.message });
-// export const setComplete = (payload) => ({ type: "todo/complete", payload });
-// export const setTodoAdd = (payload) => ({ type: "todo/add", payload });
-// export const setFilter = (payload) => ({ type: "filter/set", payload });
 
 // creo esta funcion con el dispatch inyectado , para ejecutarla y verificar que este sea capturado por el asyncMiddleware
 export const fetchThunk = () => async (dispatch) => {
@@ -56,11 +39,13 @@ const fulfilledReducer = makeSetReducer(["todos/fulfilled"]);
 // ahora tenermos que componer la ejecucion de los reducer con la funcion de reduceReducers y pasarle los reducer segund el orden de ejecucion que queremos
 const todoReducer = reduceReducers(crudReducer, fulfilledReducer);
 
-export const fetchingReducer = makeFetchingReducer([
-  "todos/pending",
-  "todos/fulfilled",
-  "todos/error",
-]);
+
+export const fetchingReducer = makeFetchingReducer(asyncTodos);
+// export const fetchingReducer = makeFetchingReducer([
+//   "todos/pending",
+//   "todos/fulfilled",
+//   "todos/error",
+// ]);
 
 // esta es una version mucho mas simplificada para usar los reducers separados
 // aqui podemos hacer composicion de reducers
