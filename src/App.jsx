@@ -20,7 +20,7 @@ export const fetchThunk = () => async (dispatch) => {
     const response = await fetch('https://jsonplaceholder.typicode.com/todos'); // consulto a al API
     const data = await response.json(); // convierto el resultado en formato JSON 
     const todos = data.slice(0,10);  // la API me retorna 200 registros, aqui los limito a solo 10
-    dispatch({type:'todos/fullfiled', payload:todos});
+    dispatch({type:'todos/fulfilled', payload:todos});
     console.log("🚀 ~ file: App.jsx:23 ~ fetchThunk ~ todos:", todos)
   } catch (e) {
     dispatch({type:'todos/error', error: e.message}); // hago un dicpatch para capturar un mensaje de error
@@ -44,7 +44,7 @@ export const filterReducer = (state = "all", action) => {
 
 export const todoReducer = (state = [], action) => {
   switch (action.type) {
-    case "todos/fullfiled":{
+    case "todos/fulfilled":{
       return state = action.payload;
     }
     case "todo/add": {
@@ -64,9 +64,37 @@ export const todoReducer = (state = [], action) => {
   }
 };
 
+
+// este es un reducer que se encarga de ver las acciones relacionadas al fetch de la API 
+const initialFetching = {
+  loading : 'idle', // pending - succeded - rejected  (se recomienda manejar mas de un estado en lugar de true - false , asi se puede hacer mejor control y debugeo de como se esta comportando alguna accion)
+  error : null,
+}
+export const fetchingReducer = (state = initialFetching , action) =>{
+  switch (action.type) {
+    case 'todos/pending':{
+      return {...state, loading : 'pending'}
+    }
+    case "todos/fulfilled":{
+      return {...state, loading : 'succeded'}
+    }
+    case "todos/rejected":{
+      return { loading : 'rejected', error:action.error}
+    }
+    default:{
+      return state
+    }
+  }
+}
+
 // esta es una version mucho mas simplificada para usar los reducers separados 
+// aqui podemos hacer composicion de reducers 
 export const reducer = combineReducers({
-  entities: todoReducer,
+  // este se encarga de todo lo relacionado con los todos y se hace una composicion entre el todoReducer y el fetchingReducer
+  todos : combineReducers({
+    entities : todoReducer,
+    status : fetchingReducer
+  }),
   filter: filterReducer,
 })
 
@@ -91,8 +119,11 @@ const TodoItem = ({ todo }) => {
 };
 
 // esta funcion lo que evalua es los estados del filter para filtrar los todo y retornarlos con el estado completed filtrado
+// aqui se hace una refactorizacion de los todos , porque en el combineReducers se cambio el nombre de la propiedad
+// se puede hacer algo como [const { todos : {entities}, filter} = state] , esto garantiza de que se llama la nueva propiedad en el definida en el combinedReducers "Todos" pero haciendo el destractoring o llamando a su propiedad interna de "entities"
 const selectedTodos = (state) => {
-  const { entities, filter } = state;
+  const {todos:{entities}, filter} = state;
+  // const { entities, filter } = state;
 
   if (filter === "complete") {
     return entities.filter((todo) => todo.completed);
@@ -103,6 +134,9 @@ const selectedTodos = (state) => {
   return entities;
 };
 
+// aqui accedo al state y traigo de los todos el status
+const selectedStatus = (state) =>state.todos.status
+
 function App() {
   const input = useRef();
   // const state = useSelector((x) => x); // aqui simplemente estaba retornado los valores completos de state.
@@ -110,6 +144,9 @@ function App() {
   // aqui le puedo pasar una funcion que me va retornar los todos dependiendo de los filtros
   // aqui cambio el nombre que la constante que traera los todos de "state" a "todos" para no generar confilcto con el state del reducer
   const todos = useSelector(selectedTodos);
+  
+  // uso el useSelector del status contenido en los todos para poder implementarlos en el codigo
+  const status = useSelector(selectedStatus);
 
   const dispatch = useDispatch();
   const [value, setValue] = useState("");
@@ -133,7 +170,12 @@ function App() {
     setValue(target.value);
   };
 
-  // console.log(state);
+  if(status.loading === "pending"){
+    return (<p>Cargando.....</p>)
+  }
+  if(status.loading === "rejected"){
+    return (<p>{status.error}</p>)
+  }
   return (
     <div>
       <form onSubmit={submit}>
